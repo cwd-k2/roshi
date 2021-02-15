@@ -69,6 +69,11 @@ func RoshiInit(c *cobra.Command, args []string) error {
 		return errors.WithStack(err)
 	}
 
+	// .roshi-ignore を作成 (存在しなければ)
+	if err := CreateRoshiIgnore(cwd); err != nil {
+		return errors.WithStack(err)
+	}
+
 	return nil
 }
 
@@ -89,6 +94,23 @@ func CreateRoshiOrigin(p, srcdir string) error {
 	return nil
 }
 
+func CreateRoshiIgnore(p string) error {
+	filename := filepath.Join(p, roshi.ROSHI_IGNORE)
+
+	// ファイルが存在しない以外の場合 (nil なら存在してるので nil 返せる)
+	if _, err := os.Stat(filename); !os.IsNotExist(err) {
+		return err
+	}
+
+	fp, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+	defer fp.Close()
+
+	return nil
+}
+
 func CreateRoshiJson(p string) error {
 	filename := filepath.Join(p, roshi.ROSHI_JSON)
 
@@ -102,12 +124,9 @@ func CreateRoshiJson(p string) error {
 	if err != nil {
 		return err
 	}
+	defer fp.Close()
 
 	if err := json.NewEncoder(fp).Encode(map[string]string{}); err != nil {
-		return err
-	}
-
-	if err := fp.Close(); err != nil {
 		return err
 	}
 
