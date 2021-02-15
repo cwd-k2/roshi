@@ -3,8 +3,11 @@ package confirm
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"os"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 var stdin = bufio.NewReader(os.Stdin)
@@ -14,7 +17,7 @@ func Confirm(msg string) bool {
 
 	resp, err := stdin.ReadString('\n')
 	if err != nil {
-		panic(err)
+		log.Fatalf("%+v", errors.WithStack(err))
 	}
 
 	switch strings.TrimSpace(resp) {

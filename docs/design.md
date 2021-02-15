@@ -5,10 +5,9 @@
 - このディレクトリが存在する場所を `roshi` の管理下とする
 - 中身
   - `.roshi/origin`: 元ディレクトリへのパス
-  - `.roshi/origin-modtime.json`: 前回の `pull`, `push` 時の元ディレクトリのファイルの最終編集時刻
-    - `pull` 時に更新
-  - `.roshi/derive-modtime.json`: 前回の `pull`, `push` 時の管理下にあるファイルの最終編集時刻
-    - `pull` 時に更新
+  - `.roshi/object`: `roshi` に関わる全てのファイルのハッシュ値を抱えておくディレクトリ
+    - ファイルのフルパスのハッシュをファイル名, ファイルの内容のハッシュ値を内容に持っている
+    - `pull`, `push` 時に更新
 
 ## `.roshi.json` ファイル
 
@@ -40,26 +39,22 @@
   - `.roshi` ディレクトリを作成
   - `.roshi/origin` が親にあれば失敗する
 - `pull`: 元ディレクトリからパターンに合うファイルを取ってきて管理下の対応するパスに置く
-  - `.roshi.json` を参照する (`map[*regexp.Regexp]string` を得る)
-  - `.roshi/origin-modtime.json` を参照
-  - `.roshi/derive-modtime.json` を参照
+  - `.roshi.json` を参照する
+  - `.roshi/object` を参照
   - ofile changed
     - dfile exists
       - dfile changed => 上書き or create timestamped file (confirm)
       - dfile NOT changed => 上書き
     - dfile NOT exists => 上書き
   - ofile NOT changed => 放置
-  - `.roshi/origin-modtime.json` を更新
-  - `.roshi/derive-modtime.json` を更新
+  - `.roshi/object` を更新
 - `push`: 管理下にあるファイルを対応する元ディレクトリのパスに書き込む
-  - `.roshi.json` を参照する (`map[*regexp.Regexp]string` を得る)
-  - `.roshi/origin-modtime.json` を参照
-  - `.roshi/derive-modtime.json` を参照
+  - `.roshi.json` を参照する
+  - `.roshi/object` を参照
   - dfile changed
     - ofile exists
       - ofile changed => 上書き or 放置 (confirm)
       - ofile NOT changed => 上書き
     - ofile NOT exists => 上書き or 放置 (confirm)
   - dfile NOT changed => 放置
-  - `.roshi/origin-modtime.json` を更新
-  - `.roshi/derive-modtime.json` を更新
+  - `.roshi/object` を更新

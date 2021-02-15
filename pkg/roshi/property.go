@@ -38,86 +38,35 @@ func ReadRoshiJson(root string) (map[string]string, error) {
 	return patterns, nil
 }
 
-// root から .roshi/origin-modtime.json を読み出す
-func ReadOriginModTime(root string) (MTRecord, error) {
-	filename := filepath.Join(root, ORIGIN_MODTIME)
-	modified := map[string]string{}
+// root から .roshi/object の内容を読み書きする構造体を作成する
+func ReadRecord(root string) (*MTRecord, error) {
+	dirname := filepath.Join(root, ROSHI_OBJECT)
 
-	fp, err := os.Open(filename)
-	if err != nil {
-		return nil, err
-	}
-	defer fp.Close()
-
-	if err := json.NewDecoder(fp).Decode(&modified); err != nil {
+	if err := os.MkdirAll(dirname, os.ModePerm); err != nil {
 		return nil, err
 	}
 
-	return modified, nil
-}
+	mtrecord := &MTRecord{dirname}
 
-// .roshi/origin-modtime.json を上書きする
-func WriteOriginModTime(root string, modified MTRecord) error {
-	filename := filepath.Join(root, ORIGIN_MODTIME)
-
-	fp, err := os.Create(filename)
-	if err != nil {
-		return err
-	}
-	defer fp.Close()
-
-	if err := json.NewEncoder(fp).Encode(modified); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// root から .roshi/derive-modtime.json を読み出す
-func ReadDeriveModTime(root string) (MTRecord, error) {
-	filename := filepath.Join(root, DERIVE_MODTIME)
-	modified := map[string]string{}
-
-	fp, err := os.Open(filename)
-	if err != nil {
-		return nil, err
-	}
-	defer fp.Close()
-
-	if err := json.NewDecoder(fp).Decode(&modified); err != nil {
-		return nil, err
-	}
-
-	return modified, nil
-}
-
-// .roshi/derive-modtime.json を上書きする
-func WriteDeriveModTime(root string, modified MTRecord) error {
-	filename := filepath.Join(root, DERIVE_MODTIME)
-
-	fp, err := os.Create(filename)
-	if err != nil {
-		return err
-	}
-	defer fp.Close()
-
-	if err := json.NewEncoder(fp).Encode(modified); err != nil {
-		return err
-	}
-
-	return nil
+	return mtrecord, nil
 }
 
 // .roshi-ignore を読む
 func ReadIgnores(root string) ([]*regexp.Regexp, error) {
 	filename := filepath.Join(root, ROSHI_IGNORE)
+	// デフォルトで `.roshi` は ignore しておく
+	ignores := []*regexp.Regexp{regexp.MustCompile(`\.roshi`)}
+
+	// .roshi.ignore が無い場合は無視
+	if _, err := os.Stat(filename); os.IsNotExist(err) {
+		return ignores, nil
+	}
+
 	fp, err := os.Open(filename)
 	if err != nil {
-		return nil, err
+		return ignores, err
 	}
 	defer fp.Close()
-
-	ignores := make([]*regexp.Regexp, 0)
 
 	sc := bufio.NewScanner(fp)
 	for sc.Scan() {
@@ -130,9 +79,6 @@ func ReadIgnores(root string) ([]*regexp.Regexp, error) {
 
 		ignores = append(ignores, regexp.MustCompile(line))
 	}
-
-	// デフォルトで ".roshi" は ignore しておく
-	ignores = append(ignores, regexp.MustCompile(".roshi"))
 
 	return ignores, nil
 }
