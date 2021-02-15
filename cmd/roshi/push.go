@@ -89,11 +89,8 @@ outer:
 				}
 			}
 
-			// glob してるから存在しないということはない
-			if info, err := os.Stat(dpath); err != nil {
-				pushlog.Printf("%+v", errors.WithStack(err))
-				continue
-			} else if info.IsDir() { // ディレクトリは困りますね
+			// ディレクトリは困りますね (glob してきたものだから PathError はなさそう)
+			if info, _ := os.Stat(dpath); info.IsDir() {
 				pushlog.Printf("%s is a directory.\n", dpath)
 				continue
 			}
