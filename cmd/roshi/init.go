@@ -43,8 +43,6 @@ func RoshiInit(c *cobra.Command, args []string) error {
 	if dir, err := roshi.FindRoot(cwd); err == nil { // 既に roshi の管理下にある場合
 		initlog.Printf("A directory %s is already initialized\n", dir)
 		return nil
-	} else if _, ok := err.(roshi.ErrRootNotFound); !ok { // ErrRootNotFound 以外のエラーの場合
-		initlog.Fatalf("%+v", errors.WithStack(err))
 	}
 
 	// .roshi/ を作成する
@@ -70,12 +68,9 @@ func CreateRoshiOrigin(p, srcdir string) error {
 	if err != nil {
 		return err
 	}
+	defer fp.Close()
 
 	if _, err := strings.NewReader(srcdir).WriteTo(fp); err != nil {
-		return err
-	}
-
-	if err := fp.Close(); err != nil {
 		return err
 	}
 
