@@ -19,7 +19,7 @@ var (
 		Args: cobra.ExactArgs(1),
 		RunE: RoshiInit,
 	}
-	initlog = log.New(os.Stderr, "[init] ", log.LstdFlags|log.Ltime)
+	initlog = log.New(os.Stderr, "[init] ", log.LstdFlags)
 )
 
 func init() {

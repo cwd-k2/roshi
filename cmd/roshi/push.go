@@ -20,7 +20,7 @@ var (
 		Args: cobra.ExactArgs(0),
 		RunE: RoshiPush,
 	}
-	pushlog = log.New(os.Stderr, "[push] ", log.LstdFlags|log.Ltime)
+	pushlog = log.New(os.Stderr, "[push] ", log.LstdFlags)
 )
 
 func init() {

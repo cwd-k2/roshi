@@ -21,7 +21,7 @@ var (
 		Args: cobra.ExactArgs(0),
 		RunE: RoshiPull,
 	}
-	pulllog = log.New(os.Stderr, "[pull] ", log.LstdFlags|log.Ltime)
+	pulllog = log.New(os.Stderr, "[pull] ", log.LstdFlags)
 )
 
 func init() {
