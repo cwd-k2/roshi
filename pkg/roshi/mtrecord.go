@@ -2,6 +2,7 @@ package roshi
 
 import (
 	"bytes"
+	"crypto/md5"
 	"crypto/sha256"
 	"encoding/hex"
 	"io/ioutil"
@@ -57,7 +58,7 @@ func (m *MTRecord) Update(f string) error {
 }
 
 func FileNameHash(filename string) string {
-	b := sha256.Sum256([]byte(filename))
+	b := md5.Sum([]byte(filename))
 	return hex.EncodeToString(b[:])
 }
 
