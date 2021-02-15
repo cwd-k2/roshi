@@ -124,9 +124,6 @@ outer:
 				update = Confirm(msg)
 			}
 
-			// 全部更新
-			record.Update(dpath)
-
 			if update {
 				if err := CopyAll(dpath, opath); err != nil {
 					pushlog.Printf("%+v", errors.WithStack(err))
@@ -134,6 +131,7 @@ outer:
 				}
 				fmt.Fprintf(os.Stdout, "[push] %s => %s\n", dfile, ofile)
 
+				record.Update(dpath)
 				record.Update(opath)
 			}
 		}

@@ -122,9 +122,6 @@ outer:
 				}
 			}
 
-			// 全部更新
-			record.Update(opath)
-
 			if update {
 				if err := CopyAll(opath, dpath); err != nil {
 					pulllog.Printf("%+v", errors.WithStack(err))
@@ -132,6 +129,7 @@ outer:
 				}
 				fmt.Fprintf(os.Stdout, "[pull] %s => %s\n", ofile, dfile)
 
+				record.Update(opath)
 				record.Update(dpath)
 			} else {
 				timestamp := time.Now().Format("20060102030405")
