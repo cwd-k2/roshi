@@ -57,7 +57,7 @@ func ReadIgnores(root string) ([]*regexp.Regexp, error) {
 	// デフォルトで `.roshi` は ignore しておく
 	ignores := []*regexp.Regexp{regexp.MustCompile(`\.roshi`)}
 
-	// .roshi.ignore が無い場合は無視
+	// .roshi-ignore が無い場合は無視
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
 		return ignores, nil
 	}

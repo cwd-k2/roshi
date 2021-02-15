@@ -104,7 +104,7 @@ outer:
 			}
 
 			// ofile が更新されるかどうか
-			update := false
+			update := true
 
 			// 元ディレクトリのファイルのフルパス
 			opath := filepath.Join(origin, ofile)
@@ -118,8 +118,6 @@ outer:
 				if modified {
 					msg := fmt.Sprintf("overwrite %s with %s?", ofile, dfile)
 					update = Confirm(msg)
-				} else {
-					update = true
 				}
 			} else {
 				msg := fmt.Sprintf("create new file %s?", ofile)

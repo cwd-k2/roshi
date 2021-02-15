@@ -105,7 +105,7 @@ outer:
 			}
 
 			// dfile が更新されるかどうか
-			update := false
+			update := true
 
 			// 管理下のファイルのフルパス
 			dpath := filepath.Join(root, dfile)
@@ -119,18 +119,7 @@ outer:
 				if modified {
 					msg := fmt.Sprintf("overwrite %s with %s?", dfile, ofile)
 					update = Confirm(msg)
-
-					if !update {
-						timestamp := time.Now().Format("20060102030405")
-						CopyAll(opath, dpath+"~"+timestamp)
-						fmt.Fprintf(os.Stdout, "[pull] see %s for change.\n", dfile+"~"+timestamp)
-					}
-
-				} else {
-					update = true
 				}
-			} else {
-				update = true
 			}
 
 			// 全部更新
@@ -144,6 +133,10 @@ outer:
 				fmt.Fprintf(os.Stdout, "[pull] %s => %s\n", ofile, dfile)
 
 				record.Update(dpath)
+			} else {
+				timestamp := time.Now().Format("20060102030405")
+				CopyAll(opath, dpath+"~"+timestamp)
+				fmt.Fprintf(os.Stdout, "[pull] see %s for change.\n", dfile+"~"+timestamp)
 			}
 
 		}
