@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -13,11 +13,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var initcmd = &cobra.Command{
-	Use:  "init /path/to/origin",
-	Args: cobra.ExactArgs(1),
-	RunE: RoshiInit,
-}
+var (
+	initcmd = &cobra.Command{
+		Use:  "init /path/to/origin",
+		Args: cobra.ExactArgs(1),
+		RunE: RoshiInit,
+	}
+	initlog = log.New(os.Stderr, "[init] ", log.LstdFlags)
+)
 
 func init() {
 	cmd.AddCommand(initcmd)
@@ -26,52 +29,37 @@ func init() {
 func RoshiInit(c *cobra.Command, args []string) error {
 	cwd, err := os.Getwd()
 	if err != nil {
-		return errors.WithStack(err)
+		initlog.Fatalf("%+v", errors.WithStack(err))
 	}
 
 	srcdir, err := filepath.Abs(args[0])
 	if err != nil {
-		return errors.WithStack(err)
+		initlog.Fatalf("%+v", errors.WithStack(err))
 	}
 
 	// TODO: srcdir が cwd 以下にないことを保証
 
 	// .roshi のルートを探してみる (存在しないことが望まれる)
 	if dir, err := roshi.FindRoot(cwd); err == nil { // 既に roshi の管理下にある場合
-		fmt.Fprintf(os.Stderr, "A directory %s is already initialized\n", dir)
-		os.Exit(1)
+		initlog.Printf("A directory %s is already initialized\n", dir)
+		return nil
 	} else if _, ok := err.(roshi.ErrRootNotFound); !ok { // ErrRootNotFound 以外のエラーの場合
-		return errors.WithStack(err)
+		initlog.Fatalf("%+v", errors.WithStack(err))
 	}
 
 	// .roshi/ を作成する
 	if err := os.MkdirAll(filepath.Join(cwd, roshi.ROSHI_DIR), os.ModePerm); err != nil && !os.IsExist(err) {
-		return errors.WithStack(err)
+		initlog.Fatalf("%+v", errors.WithStack(err))
 	}
 
 	// .roshi/origin (text file)
 	if err := CreateRoshiOrigin(cwd, srcdir); err != nil {
-		return errors.WithStack(err)
-	}
-
-	// .roshi/origin-modtime.json を作成
-	if err := roshi.WriteOriginModTime(cwd, map[string]string{}); err != nil {
-		return errors.WithStack(err)
-	}
-
-	// .roshi/derive-modtime.json を作成
-	if err := roshi.WriteDeriveModTime(cwd, map[string]string{}); err != nil {
-		return errors.WithStack(err)
+		initlog.Fatalf("%+v", errors.WithStack(err))
 	}
 
 	// .roshi.json を作成 (存在しなければ)
 	if err := CreateRoshiJson(cwd); err != nil {
-		return errors.WithStack(err)
-	}
-
-	// .roshi-ignore を作成 (存在しなければ)
-	if err := CreateRoshiIgnore(cwd); err != nil {
-		return errors.WithStack(err)
+		initlog.Fatalf("%+v", errors.WithStack(err))
 	}
 
 	return nil
@@ -90,23 +78,6 @@ func CreateRoshiOrigin(p, srcdir string) error {
 	if err := fp.Close(); err != nil {
 		return err
 	}
-
-	return nil
-}
-
-func CreateRoshiIgnore(p string) error {
-	filename := filepath.Join(p, roshi.ROSHI_IGNORE)
-
-	// ファイルが存在しない以外の場合 (nil なら存在してるので nil 返せる)
-	if _, err := os.Stat(filename); !os.IsNotExist(err) {
-		return err
-	}
-
-	fp, err := os.Create(filename)
-	if err != nil {
-		return err
-	}
-	defer fp.Close()
 
 	return nil
 }

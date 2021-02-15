@@ -15,7 +15,7 @@ func FileExists(path string) bool {
 func CreateAll(filename string) (*os.File, error) {
 	// ディレクトリを先に作る
 	d, _ := filepath.Split(filename)
-	if err := os.MkdirAll(d, os.ModePerm); err != nil && !os.IsExist(err) {
+	if err := os.MkdirAll(d, os.ModePerm); err != nil {
 		return nil, err
 	}
 

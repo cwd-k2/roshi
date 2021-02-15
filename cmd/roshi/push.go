@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 
@@ -13,11 +14,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var pushcmd = &cobra.Command{
-	Use:  "push",
-	Args: cobra.ExactArgs(0),
-	RunE: RoshiPush,
-}
+var (
+	pushcmd = &cobra.Command{
+		Use:  "push",
+		Args: cobra.ExactArgs(0),
+		RunE: RoshiPush,
+	}
+	pushlog = log.New(os.Stderr, "[push] ", log.LstdFlags)
+)
 
 func init() {
 	cmd.AddCommand(pushcmd)
@@ -26,94 +30,81 @@ func init() {
 func RoshiPush(c *cobra.Command, args []string) error {
 	cwd, err := os.Getwd()
 	if err != nil {
-		return errors.WithStack(err)
+		pushlog.Fatalf("%+v", errors.WithStack(err))
 	}
 
 	root, err := roshi.FindRoot(cwd)
 	if err != nil {
-		return errors.WithStack(err)
+		pushlog.Fatalf("%+v", errors.WithStack(err))
 	}
 
 	origin, err := roshi.ReadOriginSpec(root)
 	if err != nil {
-		return errors.WithStack(err)
+		pushlog.Fatalf("%+v", errors.WithStack(err))
 	}
 
 	patterns, err := roshi.ReadRoshiJson(root)
 	if err != nil {
-		return errors.WithStack(err)
+		pushlog.Fatalf("%+v", errors.WithStack(err))
 	}
 
 	ignores, err := roshi.ReadIgnores(root)
 	if err != nil {
-		return errors.WithStack(err)
+		pushlog.Fatalf("%+v", errors.WithStack(err))
 	}
 
-	omod, err := roshi.ReadOriginModTime(root)
+	record, err := roshi.ReadRecord(root)
 	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	dmod, err := roshi.ReadDeriveModTime(root)
-	if err != nil {
-		return errors.WithStack(err)
+		pushlog.Fatalf("%+v", errors.WithStack(err))
 	}
 
 	filtrations, err := roka.CreateFiltrations(patterns)
 	if err != nil {
-		return errors.WithStack(err)
+		pushlog.Fatalf("%+v", errors.WithStack(err))
 	}
 
 outer:
 	for _, filtration := range filtrations {
 		globpattern := roka.CreateGlobPattern(filtration.DerivePattern)
-		matches, err := filepath.Glob(filepath.Join(root, globpattern))
-		if err != nil {
-			return errors.WithStack(err)
-		}
+		matches, _ := filepath.Glob(filepath.Join(root, globpattern))
 
 		matching := roka.CreateMatchingRegexp(filtration.DerivePattern)
 		template := roka.CreateTemplateString(filtration.OriginPattern, filtration.Numberings)
 
 		for _, dpath := range matches {
-			// glob してるから存在しないということはない
-			info, err := os.Stat(dpath)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "%+v", errors.WithStack(err))
-				continue
-			}
-			// ディレクトリは困りますね
-			if info.IsDir() {
-				fmt.Fprintf(os.Stderr, "%s is a directory.\n", dpath)
-				continue
-			}
 			// 管理下のファイル名 (相対パス)
-			dfile, err := filepath.Rel(root, dpath)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "%+v", errors.WithStack(err))
-				continue
-			}
+			dfile, _ := filepath.Rel(root, dpath)
+			// 元ディレクトリの対応するファイルの名前
+			ofile := matching.ReplaceAllString(dfile, template)
+
 			// glob にはひっかかるけど matching にはかからないのは飛ばす
 			if !matching.MatchString(dfile) {
 				continue
 			}
+
 			// ignore のパターンに当てはまっていたら飛ばす
 			for _, ignore := range ignores {
-				if ignore.MatchString(dfile) {
+				if ignore.MatchString(dfile) || ignore.MatchString(ofile) {
 					continue outer
 				}
 			}
 
-			// 管理下のファイルの更新時刻
-			dtime := info.ModTime().Format("20060102030405")
-
-			// ファイルに更新がなければ飛ばす
-			if !dmod.FileModified(dfile, dtime) {
+			// glob してるから存在しないということはない
+			if info, err := os.Stat(dpath); err != nil {
+				pushlog.Printf("%+v", errors.WithStack(err))
+				continue
+			} else if info.IsDir() { // ディレクトリは困りますね
+				pushlog.Printf("%s is a directory.\n", dpath)
 				continue
 			}
 
-			// 元ディレクトリの対応するファイルの名前
-			ofile := matching.ReplaceAllString(dfile, template)
+			// ファイルに更新がなければ飛ばす
+			if m, err := record.FileModified(dpath); err != nil {
+				pushlog.Printf("%+v", errors.WithStack(err))
+				continue
+			} else if !m {
+				continue
+			}
 
 			// ofile が更新されるかどうか
 			update := false
@@ -121,10 +112,13 @@ outer:
 			// 元ディレクトリのファイルのフルパス
 			opath := filepath.Join(origin, ofile)
 			if FileExists(opath) {
-				oi, _ := os.Stat(opath)
-				otime := oi.ModTime().Format("20060102030405")
+				modified, err := record.FileModified(opath)
+				if err != nil {
+					pushlog.Printf("%+v", errors.WithStack(err))
+					continue
+				}
 
-				if omod.FileModified(ofile, otime) {
+				if modified {
 					msg := fmt.Sprintf("overwrite %s with %s?", ofile, dfile)
 					update = Confirm(msg)
 				} else {
@@ -136,28 +130,19 @@ outer:
 			}
 
 			// 全部更新
-			dmod[dfile] = dtime
+			record.Update(dpath)
 
 			if update {
 				if err := CopyAll(dpath, opath); err != nil {
-					fmt.Fprintf(os.Stderr, "%+v", errors.WithStack(err))
+					pushlog.Printf("%+v", errors.WithStack(err))
 					continue
 				}
 				fmt.Fprintf(os.Stdout, "[push] %s => %s\n", dfile, ofile)
 
-				oi, _ := os.Stat(opath)
-				otime := oi.ModTime().Format("20060102030405")
-
-				omod[ofile] = otime
+				record.Update(opath)
 			}
 		}
 	}
 
-	if err := roshi.WriteOriginModTime(root, omod); err != nil {
-		return errors.WithStack(err)
-	}
-	if err := roshi.WriteDeriveModTime(root, dmod); err != nil {
-		return errors.WithStack(err)
-	}
 	return nil
 }
