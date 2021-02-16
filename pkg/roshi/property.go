@@ -55,7 +55,11 @@ func ReadRecord(root string) (*MTRecord, error) {
 func ReadIgnores(root string) ([]*regexp.Regexp, error) {
 	filename := filepath.Join(root, ROSHI_IGNORE)
 	// デフォルトで `.roshi` は ignore しておく
-	ignores := []*regexp.Regexp{regexp.MustCompile(`\.roshi`)}
+	ignores := []*regexp.Regexp{
+		regexp.MustCompile(`\.roshi/`),
+		regexp.MustCompile(`\.roshi\.json$`),
+		regexp.MustCompile(`\.roshi-ignore$`),
+	}
 
 	// .roshi-ignore が無い場合は無視
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
