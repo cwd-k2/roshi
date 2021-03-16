@@ -86,8 +86,8 @@ func CreateFiltrations(obj map[string]string) ([]*Filtration, error) {
 // マッチするパスを探すための正規表現を作る
 func CreateMatchingRegexp(base string) *regexp.Regexp {
 	safedot := strings.ReplaceAll(base, `.`, `\.`)
-	replreg := numbering.ReplaceAllString(safedot, "([0-9a-zA-z_]+)")
-	return regexp.MustCompile("^" + replreg + "$")
+	replreg := numbering.ReplaceAllString(safedot, `([^/\.]+?)`)
+	return regexp.MustCompile(fmt.Sprintf("^%s$", replreg))
 }
 
 // 正規表現ではなく Glob 用のパターンを作る
@@ -98,7 +98,7 @@ func CreateGlobPattern(base string) string {
 // マッチしたものを置換する先の文字列を作る
 func CreateTemplateString(base string, numberings []string) string {
 	for i, pattern := range numberings {
-		base = strings.ReplaceAll(base, pattern, fmt.Sprintf("$%d", i+1))
+		base = strings.ReplaceAll(base, pattern, fmt.Sprintf("${%d}", i+1))
 	}
 	return base
 }

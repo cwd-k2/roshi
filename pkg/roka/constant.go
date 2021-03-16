@@ -8,7 +8,7 @@ import (
 var (
 	numbering = regexp.MustCompile(`(#[0-9]+)`)
 
-	numseq = regexp.MustCompile(`(#[0-9][0-9a-zA-Z_]*#[0-9]+)`)
+	numseq = regexp.MustCompile(`(#[0-9]+#[0-9]+)`)
 	thereg = regexp.MustCompile(`([\[\]\{\}\<\>\*\+\?\|\^\$])`)
 	parent = regexp.MustCompile(`([/|^]\.\.[/|$])`)
 )
