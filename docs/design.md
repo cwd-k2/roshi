@@ -7,7 +7,7 @@
   - `.roshi/origin`: 元ディレクトリへのパス
   - `.roshi/object`: `roshi` に関わる全てのファイルのハッシュ値を抱えておくディレクトリ
     - ファイルのフルパスのハッシュをファイル名, ファイルの内容のハッシュ値を内容に持っている
-    - `pull`, `push` 時に更新
+    - `pull`, `push` 時に, ファイルの変更が反映されたときに更新される.
 
 ## `.roshi.json` ファイル
 
@@ -47,7 +47,7 @@
       - dfile NOT changed => 上書き
     - dfile NOT exists => 上書き
   - ofile NOT changed => 放置
-  - `.roshi/object` を更新
+  - ファイルの変更の反映があれば `.roshi/object` を更新
 - `push`: 管理下にあるファイルを対応する元ディレクトリのパスに書き込む
   - `.roshi.json` を参照する
   - `.roshi/object` を参照
@@ -57,4 +57,4 @@
       - ofile NOT changed => 上書き
     - ofile NOT exists => 上書き or 放置 (confirm)
   - dfile NOT changed => 放置
-  - `.roshi/object` を更新
+  - ファイルの変更の反映があれば `.roshi/object` を更新

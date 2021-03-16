@@ -14,6 +14,7 @@ func (e ErrRootNotFound) Error() string {
 }
 
 // 親を辿って `.roshi/origin` ファイルがあるディレクトリを探す
+// 返ってくるエラーは ErrRootNotFound のみ (bool でよいかもしれない)
 func FindRoot(path string) (string, error) {
 	filename := filepath.Join(path, ORIGIN_SPEC)
 

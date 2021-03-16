@@ -3,6 +3,7 @@ package confirm
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"strings"
@@ -16,7 +17,10 @@ func Confirm(msg string) bool {
 	fmt.Fprintf(os.Stdout, "%s [y/n] ", msg)
 
 	resp, err := stdin.ReadString('\n')
-	if err != nil {
+	if err == io.EOF {
+		fmt.Println("n")
+		return false
+	} else if err != nil {
 		log.Fatalf("%+v", errors.WithStack(err))
 	}
 
