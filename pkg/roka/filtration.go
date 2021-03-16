@@ -11,9 +11,10 @@ import (
 
 // マッチする正規表現と置換先のテンプレートとなる文字列を作るための道具
 type Filtration struct {
-	OriginPattern string
-	DerivePattern string
-	Numberings    []string
+	OriginPattern  string
+	DerivePattern  string
+	OrigNumberings []string
+	DeriNumberings []string
 }
 
 func CreateFiltrations(obj map[string]string) ([]*Filtration, error) {
@@ -57,16 +58,24 @@ func CreateFiltrations(obj map[string]string) ([]*Filtration, error) {
 		derivestrs = append(derivestrs, derive)
 
 		// 文字列の長さを長い順にしないと #1 と #10 とかが上手く置換できないので必要
-		var numberings []string
-		numberings = append(numberings, arr1...)
-		sort.Slice(numberings, func(i, j int) bool {
-			return len(numberings[i]) > len(numberings[j])
+		// origin, derive でナンバリングが出てくる順番も重要であるため, 両方の持っておく必要がある
+		var orignumberings []string
+		orignumberings = append(orignumberings, arr1...)
+		sort.SliceStable(orignumberings, func(i, j int) bool {
+			return len(orignumberings[i]) > len(orignumberings[j])
+		})
+
+		var derinumberings []string
+		derinumberings = append(derinumberings, arr2...)
+		sort.SliceStable(derinumberings, func(i, j int) bool {
+			return len(derinumberings[i]) > len(derinumberings[j])
 		})
 
 		filtration := &Filtration{
-			OriginPattern: origin,
-			DerivePattern: derive,
-			Numberings:    numberings,
+			OriginPattern:  origin,
+			DerivePattern:  derive,
+			OrigNumberings: orignumberings,
+			DeriNumberings: derinumberings,
 		}
 		filtrations = append(filtrations, filtration)
 	}
