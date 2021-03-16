@@ -28,7 +28,7 @@ func TestCreateFiltrations(t *testing.T) {
 	for _, filtration := range filtrations {
 		t.Logf("%+v\n", filtration)
 		pat := roka.CreateMatchingRegexp(filtration.OriginPattern)
-		str := roka.CreateTemplateString(filtration.DerivePattern, filtration.Numberings)
+		str := roka.CreateTemplateString(filtration.DerivePattern, filtration.OrigNumberings)
 		replaced := pat.ReplaceAllString(s, str)
 		t.Log(replaced)
 		if replaced != "aosij00rm_kliajr/iur.cpp" {

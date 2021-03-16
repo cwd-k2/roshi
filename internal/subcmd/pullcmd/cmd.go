@@ -111,7 +111,7 @@ func run(c *cobra.Command, args []string) {
 		matches, _ := filepath.Glob(filepath.Join(origin, globpattern))
 
 		matching := roka.CreateMatchingRegexp(filtration.OriginPattern)
-		template := roka.CreateTemplateString(filtration.DerivePattern, filtration.Numberings)
+		template := roka.CreateTemplateString(filtration.DerivePattern, filtration.OrigNumberings)
 
 		for _, opath := range matches {
 			// 元ディレクトリのファイル名 (相対パス)
