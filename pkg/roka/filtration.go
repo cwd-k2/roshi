@@ -87,7 +87,7 @@ func CreateFiltrations(obj map[string]string) ([]*Filtration, error) {
 func CreateMatchingRegexp(base string) *regexp.Regexp {
 	safedot := strings.ReplaceAll(base, `.`, `\.`)
 	replreg := numbering.ReplaceAllString(safedot, "([0-9a-zA-z_]+)")
-	return regexp.MustCompile(replreg)
+	return regexp.MustCompile("^" + replreg + "$")
 }
 
 // 正規表現ではなく Glob 用のパターンを作る
